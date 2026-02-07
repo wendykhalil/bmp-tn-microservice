@@ -1,0 +1,4 @@
+package tn.esprit.projectwebdist.model;
+
+public class ChantierUpdate {
+}

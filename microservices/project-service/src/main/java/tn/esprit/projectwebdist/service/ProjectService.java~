@@ -1,0 +1,85 @@
+package tn.esprit.projectwebdist.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.projectwebdist.dto.*;
+import tn.esprit.projectwebdist.model.*;
+import tn.esprit.projectwebdist.repository.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ProjectService {
+
+    private final ProjectRepository projectRepository;
+    private final ChantierUpdateRepository updateRepository;
+
+    public Project create(CreateProjectRequest req) {
+        Project p = Project.builder()
+                .artisanId(req.getArtisanId())
+                .title(req.getTitle())
+                .description(req.getDescription())
+                .location(req.getLocation())
+                .startDate(req.getStartDate())
+                .endDate(req.getEndDate())
+                .budget(req.getBudget())
+                .status(ProjectStatus.PLANNED)
+                .build();
+        return projectRepository.save(p);
+    }
+
+    public List<Project> listAll() {
+        return projectRepository.findAll();
+    }
+
+    public List<Project> listByArtisan(Long artisanId) {
+        return projectRepository.findByArtisanId(artisanId);
+    }
+
+    public Project get(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+    }
+
+    @Transactional
+    public Project update(Long id, UpdateProjectRequest req) {
+        Project p = get(id);
+        if (req.getTitle() != null) p.setTitle(req.getTitle());
+        if (req.getDescription() != null) p.setDescription(req.getDescription());
+        if (req.getLocation() != null) p.setLocation(req.getLocation());
+        if (req.getStartDate() != null) p.setStartDate(req.getStartDate());
+        if (req.getEndDate() != null) p.setEndDate(req.getEndDate());
+        if (req.getBudget() != null) p.setBudget(req.getBudget());
+        return p;
+    }
+
+    @Transactional
+    public Project updateStatus(Long id, UpdateStatusRequest req) {
+        Project p = get(id);
+        p.setStatus(req.getStatus());
+        return p;
+    }
+
+    public ChantierUpdate addUpdate(Long projectId, CreateChantierUpdateRequest req) {
+        Project p = get(projectId);
+        ChantierUpdate u = ChantierUpdate.builder()
+                .project(p)
+                .progressPercent(req.getProgressPercent())
+                .note(req.getNote())
+                .createdAt(LocalDateTime.now())
+                .build();
+        return updateRepository.save(u);
+    }
+
+    public List<ChantierUpdate> listUpdates(Long projectId) {
+        return updateRepository.findByProject_IdOrderByCreatedAtDesc(projectId);
+    }
+
+    public void delete(Long id) {
+        projectRepository.deleteById(id);
+    }
+
+}
